@@ -1,7 +1,7 @@
 # Your name: Azra Tokovic
 # Your student id: 16880262
 # Your email: atokovic@umich.edu
-# List who you have worked with on this homework:
+# List who you have worked with on this homework: Dylan Heiss
 
 import matplotlib.pyplot as plt
 import os
@@ -24,7 +24,6 @@ def load_rest_data(db_filename):
         final_dct[tup[0]] = {"category":tup[1],"building":tup[2],"rating":tup[3]}
     return final_dct
 
-
 def plot_rest_categories(db_filename):
     """
     This function accepts a file name of a database as a parameter and returns a dictionary. The keys should be the
@@ -39,35 +38,41 @@ def plot_rest_categories(db_filename):
     for tup in info:
         final_dct[tup[0]] = tup[1]
     
-    sorted_dct = sorted(final_dct.items(), key=lambda x:x[1], reverse=True)
+    sorted_dct = sorted(final_dct.items(), key=lambda x:x[1], reverse=False)
     converted_dct = dict(sorted_dct)
 
     restants = list(converted_dct.keys())
     count_num = list(converted_dct.values())
 
-    fig = plt.figure(figsize = (10, 5))
+    fig = plt.figure(figsize = (10, 4))
     plt.barh(restants, count_num)
     plt.xlabel("Number of Restaurants")
-    plt.ylabel("Number of Restaurants")
-    plt.title("Types of Restaurants on South University Avenue")
+    plt.ylabel("Type of Restaurants")
+    plt.title("Type and Number of Restaurants on South University Avenue")
+    plt.tight_layout()
     plt.show()
     plt.savefig("South_U_Restaurants_Chart.png")
 
     return final_dct
     
-
-# plot_rest_categories('South_U_Restaurants.db')
-
-def find_rest_in_building(building_num, db):
+def find_rest_in_building(building_num, db_filename):
     '''
     This function accepts the building number and the filename of the database as parameters and returns a list of 
     restaurant names. You need to find all the restaurant names which are in the specific building. The restaurants 
     should be sorted by their rating from highest to lowest.
     '''
-    pass
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path+'/'+db_filename)
+    cur = conn.cursor()
+    info = cur.execute(f"SELECT r.name, r.rating FROM restaurants r JOIN buildings b ON r.building_id = b.id WHERE b.building = {building_num}").fetchall()
+    sorted_tups = sorted(info, key=lambda x:x[1], reverse=True)
+    final_lst = []
+    for tup in sorted_tups:
+        final_lst.append(tup[0])
+    return final_lst
 
 #EXTRA CREDIT
-def get_highest_rating(db): #Do this through DB as well
+def get_highest_rating(db_filename): #Do this through DB as well
     """
     This function return a list of two tuples. The first tuple contains the highest-rated restaurant category 
     and the average rating of the restaurants in that category, and the second tuple contains the building number 
@@ -78,7 +83,53 @@ def get_highest_rating(db): #Do this through DB as well
     The second bar chart displays the buildings along the y-axis and their ratings along the x-axis 
     in descending order (by rating).
     """
-    pass
+    path = os.path.dirname(os.path.abspath(__file__))
+    conn = sqlite3.connect(path+'/'+db_filename)
+    cur = conn.cursor()
+    category_info = cur.execute('SELECT c.category, ROUND(AVG(r.rating),1) FROM restaurants r JOIN categories c ON r.category_id = c.id GROUP BY category ORDER BY AVG(r.rating) ASC').fetchall()
+    building_info = cur.execute('SELECT b.building, ROUND(AVG(r.rating),1) FROM restaurants r JOIN buildings b ON r.building_id = b.id GROUP BY building ORDER BY AVG(r.rating) ASC').fetchall()
+   
+    cat_dct = {}
+    for tup in category_info:
+        cat_dct[tup[0]] = tup[1]
+
+    bld_dct = {}
+    for tup in building_info:
+        bld_dct[tup[0]] = tup[1]
+    
+    
+    x = list(cat_dct.keys())
+    y = list(cat_dct.values())
+    plt.rcParams.update({'font.size': 5})
+    plt.figure(figsize = (4, 4))
+    plt.subplot(2, 1, 1)
+    
+    cat = plt.barh(x,y)
+    plt.xlabel("Rating")
+    plt.ylabel("Categories")
+    plt.title("Average Rating of South U Restaurants by Category")
+    
+    
+    plt.subplot(2, 1, 2)
+    x = list(bld_dct.keys())
+    y = list(bld_dct.values())
+    new_x = []
+    for num in x:
+        new_x.append(str(num))
+    bld = plt.barh(new_x,y)
+    plt.xlabel("Rating")
+    plt.ylabel("Buildings")
+    plt.title("Average Rating of South U Restaurants by Building")
+    plt.tight_layout()
+
+    plt.show()
+    plt.savefig("Average_Ratings.png")
+
+    cat_tups = list(cat_dct.items())
+    bld_tups = list(bld_dct.items())
+
+    final = [cat_tups[-1],bld_tups[-1]]
+    return final
 
 #Try calling your functions here
 def main():
