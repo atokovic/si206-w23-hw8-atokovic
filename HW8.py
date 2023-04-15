@@ -38,9 +38,25 @@ def plot_rest_categories(db_filename):
     final_dct = {}
     for tup in info:
         final_dct[tup[0]] = tup[1]
-    return final_dct
+    
+    sorted_dct = sorted(final_dct.items(), key=lambda x:x[1], reverse=True)
+    converted_dct = dict(sorted_dct)
 
-plot_rest_categories('South_U_Restaurants.db')
+    restants = list(converted_dct.keys())
+    count_num = list(converted_dct.values())
+
+    fig = plt.figure(figsize = (10, 5))
+    plt.barh(restants, count_num)
+    plt.xlabel("Number of Restaurants")
+    plt.ylabel("Number of Restaurants")
+    plt.title("Types of Restaurants on South University Avenue")
+    plt.show()
+    plt.savefig("South_U_Restaurants_Chart.png")
+
+    return final_dct
+    
+
+# plot_rest_categories('South_U_Restaurants.db')
 
 def find_rest_in_building(building_num, db):
     '''
